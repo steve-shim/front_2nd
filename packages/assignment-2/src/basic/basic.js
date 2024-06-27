@@ -121,6 +121,20 @@ export class CustomNumber {
 }
 
 export function createUnenumerableObject(target) {
+  for (const key of Object.keys(target)) {
+    Object.defineProperty(target, key, {
+      enumerable: false, // 객체의 키를 열거 가능 여부
+      configurable: false, // 객체에서 해당 속성의 삭제 가능 여부
+      writable: false, // 외부에서 객체값 변경 가능 여부
+      value: target[key],
+      // get() {
+      //   return target[key];
+      // },
+      // set(x) {
+      //   target[key] = x;
+      // },
+    });
+  }
   return target;
 }
 
