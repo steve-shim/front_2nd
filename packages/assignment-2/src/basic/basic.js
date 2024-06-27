@@ -99,7 +99,26 @@ export function createNumber3(n) {
   };
 }
 
-export class CustomNumber {}
+export class CustomNumber {
+  #value;
+  static instances = new Map();
+  constructor(value) {
+    if (CustomNumber.instances.has(value)) {
+      return CustomNumber.instances.get(value);
+    }
+    this.#value = value;
+    CustomNumber.instances.set(value, this);
+  }
+  valueOf() {
+    return this.#value;
+  }
+  toJSON() {
+    return `${this.#value}`;
+  }
+  toString() {
+    return `${this.#value}`;
+  }
+}
 
 export function createUnenumerableObject(target) {
   return target;
