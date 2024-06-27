@@ -182,7 +182,26 @@ export function map(target, callback) {
   }
 }
 
-export function filter(target, callback) {}
+export function filter(target, callback) {
+  if (Array.isArray(target) || isNodeList(target)) {
+    let result = [];
+    for (const key of target) {
+      if (callback(key)) {
+        result.push(key);
+      }
+    }
+    return result;
+  } else if (typeof target === "object" && !isNodeList(target)) {
+    let result = {};
+    let targetObj = Object.getOwnPropertyDescriptors(target);
+    for (const key in targetObj) {
+      if (callback(targetObj[key].value)) {
+        result = { ...result, [key]: targetObj[key].value };
+      }
+    }
+    return result;
+  }
+}
 
 export function every(target, callback) {}
 
