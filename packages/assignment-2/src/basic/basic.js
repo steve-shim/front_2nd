@@ -138,7 +138,31 @@ export function createUnenumerableObject(target) {
   return target;
 }
 
-export function forEach(target, callback) {}
+function isNodeList(nodes) {
+  var stringRepr = Object.prototype.toString.call(nodes);
+
+  return (
+    typeof nodes === "object" &&
+    /^\[object (HTMLCollection|NodeList|Object)\]$/.test(stringRepr) &&
+    typeof nodes.length === "number" &&
+    (nodes.length === 0 ||
+      (typeof nodes[0] === "object" && nodes[0].nodeType > 0))
+  );
+}
+
+export function forEach(target, callback) {
+  if (Array.isArray(target) || isNodeList(target)) {
+    let targetObj = Object.entries(target);
+    for (const [key, value] of targetObj) {
+      callback(value, parseInt(key));
+    }
+  } else if (typeof target === "object" && !isNodeList(target)) {
+    let targetObj = Object.getOwnPropertyDescriptors(target);
+    for (const key in targetObj) {
+      callback(targetObj[key].value, key);
+    }
+  }
+}
 
 export function map(target, callback) {}
 
