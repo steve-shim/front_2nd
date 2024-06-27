@@ -85,7 +85,18 @@ export function createNumber2(n) {
 }
 
 export function createNumber3(n) {
-  return n;
+  let value = n;
+  return {
+    valueOf() {
+      return value;
+    },
+    toJSON() {
+      return `this is createNumber3 => ${value}`;
+    },
+    toString() {
+      return `${value}`;
+    },
+  };
 }
 
 export class CustomNumber {}
