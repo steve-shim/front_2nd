@@ -203,6 +203,23 @@ export function filter(target, callback) {
   }
 }
 
-export function every(target, callback) {}
+export function every(target, callback) {
+  if (Array.isArray(target) || isNodeList(target)) {
+    for (const key of target) {
+      if (!callback(key)) {
+        return false;
+      }
+    }
+    return true;
+  } else if (typeof target === "object" && !isNodeList(target)) {
+    let targetObj = Object.getOwnPropertyDescriptors(target);
+    for (const key in targetObj) {
+      if (!callback(targetObj[key].value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
 
 export function some(target, callback) {}
