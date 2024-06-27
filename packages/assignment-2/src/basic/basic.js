@@ -164,7 +164,23 @@ export function forEach(target, callback) {
   }
 }
 
-export function map(target, callback) {}
+export function map(target, callback) {
+  if (Array.isArray(target) || isNodeList(target)) {
+    let result = [];
+    for (const key of target) {
+      result.push(callback(key));
+    }
+    return result;
+  } else if (typeof target === "object" && !isNodeList(target)) {
+    let result = {};
+    let targetObj = Object.getOwnPropertyDescriptors(target);
+
+    for (const key in targetObj) {
+      result = { ...result, [key]: callback(targetObj[key].value) };
+    }
+    return result;
+  }
+}
 
 export function filter(target, callback) {}
 
