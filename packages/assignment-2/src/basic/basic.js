@@ -222,4 +222,21 @@ export function every(target, callback) {
   }
 }
 
-export function some(target, callback) {}
+export function some(target, callback) {
+  if (Array.isArray(target) || isNodeList(target)) {
+    for (const key of target) {
+      if (callback(key)) {
+        return true;
+      }
+    }
+    return false;
+  } else if (typeof target === "object" && !isNodeList(target)) {
+    let targetObj = Object.getOwnPropertyDescriptors(target);
+    for (const key in targetObj) {
+      if (callback(targetObj[key].value)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
