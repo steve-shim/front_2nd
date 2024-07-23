@@ -1,6 +1,9 @@
 name: CI Assignment 6
 
 on:
+  push:
+    branches: [test]
+
   pull_request:
     types: [opened, synchronize]
 
