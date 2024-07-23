@@ -14,9 +14,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       # - name: job1 구현 tsc, build 를 실행한다. 오류가 발생하면 코멘트를 남긴다.
       #   run: echo "job1의 내용을 구현해주세요"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
       - name: List files
         run: ls -al
       - name: Install pnpm
