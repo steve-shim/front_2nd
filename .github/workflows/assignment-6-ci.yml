@@ -25,8 +25,8 @@ jobs:
         run: pnpm install
       - name: Build
         run: pnpm run build
-
-      - run: |
+      - if: always()
+        run: |
           echo "## TEST" >> $GITHUB_STEP_SUMMARY
           echo "- ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
