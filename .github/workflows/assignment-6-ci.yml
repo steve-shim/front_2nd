@@ -26,10 +26,29 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Build
         run: |
-          pnpm install 
-          pnpm -F assignment-6 build
+          pnpm -F assignment-6 build 2>&1 | tee error.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Comment PR
+        if: failure()
+        uses: actions/github-script@v6.4.0
+        with:
+          github-token: ${{secrets.TOKEN_FOR_CI}}
+          script: |
+            const fs = require('fs')
+            const errorLog = fs.readFileSync('error.log', 'utf8')
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### tsc&build error ${errorLog}`
+            })
 
   lint:
     runs-on: ubuntu-latest
@@ -43,10 +62,14 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Lint
         run: |
-          pnpm install
-          pnpm -F assignment-6 lint > eslint_report.txt
+          pnpm -F assignment-6 lint 2>&1 | tee error.log
+          exit ${PIPESTATUS[0]}
+
       - name: Lint Failure
         if: failure()
         uses: actions/github-script@v6
@@ -54,7 +77,7 @@ jobs:
           github-token: ${{ secrets.TOKEN_FOR_CI }}
           script: |
             const fs = require('fs')
-            const eslintReport = fs.readFileSync('eslint_report.txt', 'utf8')
+            const eslintReport = fs.readFileSync('error.log', 'utf8')
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
