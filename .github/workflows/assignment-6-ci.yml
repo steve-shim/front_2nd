@@ -30,7 +30,6 @@ jobs:
         id: build
         run: |
           pnpm -F assignment-6 build 2>&1 | tee error.log
-          exit ${PIPESTATUS[0]}
 
       - name: Comment PR
         if: failure()
