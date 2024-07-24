@@ -5,7 +5,7 @@ import { Coupon, Product } from "./types.ts";
 
 const initialProducts: Product[] = [
   {
-    id: "p1",
+    id: "p11",
     name: "상품11",
     price: 10000,
     stock: 20,
