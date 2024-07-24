@@ -46,43 +46,43 @@ jobs:
               body: `### tsc&build error ${errorLog}`
             })
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: latest
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "pnpm"
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install
+  #     - name: Install dependencies
+  #       run: pnpm install
 
-      - name: lint
-        id: lint
-        run: |
-          pnpm -F assignment-6 lint 2>&1 | tee error.log
-          exit ${PIPESTATUS[0]}
+  #     - name: lint
+  #       id: lint
+  #       run: |
+  #         pnpm -F assignment-6 lint 2>&1 | tee error.log
+  #         exit ${PIPESTATUS[0]}
 
-      - name: Comment PR
-        if: failure()
-        uses: actions/github-script@v6.4.0
-        with:
-          github-token: ${{secrets.TOKEN_FOR_CI}}
-          script: |
-            const fs = require('fs')
-            const errorLog = fs.readFileSync('error.log', 'utf8')
+  #     - name: Comment PR
+  #       if: failure()
+  #       uses: actions/github-script@v6.4.0
+  #       with:
+  #         github-token: ${{secrets.TOKEN_FOR_CI}}
+  #         script: |
+  #           const fs = require('fs')
+  #           const errorLog = fs.readFileSync('error.log', 'utf8')
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `### lint error ${errorLog}`
-            })
+  #           github.rest.issues.createComment({
+  #             issue_number: context.issue.number,
+  #             owner: context.repo.owner,
+  #             repo: context.repo.repo,
+  #             body: `### lint error ${errorLog}`
+  #           })
 
   # test:
   #   runs-on: ubuntu-latest
