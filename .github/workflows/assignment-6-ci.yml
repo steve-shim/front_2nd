@@ -100,7 +100,7 @@ jobs:
         run: |
           pnpm install
           pnpm -F assignment-6 test
-          pnpm -F assignment-6 coverage
+          pnpm -F assignment-6 test:coverage
 
       - name: Comment Test Coverage
         uses: actions/github-script@v6
