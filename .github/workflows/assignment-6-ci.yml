@@ -1,9 +1,6 @@
 name: CI Assignment 6
 
 on:
-  push:
-    branches: [test]
-
   pull_request:
     types:
       - opened
@@ -26,10 +23,8 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install
-
       - name: Build
+        id: build
         run: |
           pnpm -F assignment-6 build 2>&1 | tee error.log
           exit ${PIPESTATUS[0]}
@@ -62,14 +57,10 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install
-
       - name: Lint
         run: |
-          pnpm -F assignment-6 lint 2>&1 | tee error.log
-          exit ${PIPESTATUS[0]}
-
+          pnpm install
+          pnpm -F assignment-6 lint > eslint_report.txt
       - name: Lint Failure
         if: failure()
         uses: actions/github-script@v6
@@ -77,7 +68,7 @@ jobs:
           github-token: ${{ secrets.TOKEN_FOR_CI }}
           script: |
             const fs = require('fs')
-            const eslintReport = fs.readFileSync('error.log', 'utf8')
+            const eslintReport = fs.readFileSync('eslint_report.txt', 'utf8')
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -88,6 +79,7 @@ jobs:
               ${eslintReport}
               `
             });
+
   test:
     runs-on: ubuntu-latest
     steps:
