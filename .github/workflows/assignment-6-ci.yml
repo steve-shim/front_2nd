@@ -5,10 +5,13 @@ on:
     branches: [test]
 
   pull_request:
-    types: [opened, synchronize]
-
+    types:
+      - opened
+      - reopened
+      - synchronize
     paths:
       - "packages/assignment-6/**"
+      - ".github/workflows/assignment-6-ci.yml"
 
 jobs:
   build:
@@ -18,243 +21,213 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: latest
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: tsc && build
-        id: build
+      - name: Build
         run: |
-          pnpm -F assignment-6 build 2>&1 | tee error.log
-          exit ${PIPESTATUS[0]}
+          pnpm install 
+          pnpm -F assignment-6 build
 
-      - name: Comment PR
-        if: failure()
-        uses: actions/github-script@v6.4.0
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          github-token: ${{secrets.TOKEN_FOR_CI}}
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Lint
+        run: |
+          pnpm install
+          pnpm -F assignment-6 lint > eslint_report.txt
+      - name: Lint Failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.TOKEN_FOR_CI }}
           script: |
             const fs = require('fs')
-            const errorLog = fs.readFileSync('error.log', 'utf8')
+            const eslintReport = fs.readFileSync('eslint_report.txt', 'utf8')
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `
+              ## ESLint Results
+
+              ${eslintReport}
+              `
+            });
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Testing and Coverage
+        run: |
+          pnpm install
+          pnpm -F assignment-6 test
+          pnpm -F assignment-6 coverage
+
+      - name: Comment Test Coverage
+        uses: actions/github-script@v6
+        if: success()
+        with:
+          github-token: ${{ secrets.TOKEN_FOR_CI }}
+          script: |
+            const fs = require('fs');
+
+            const coverage = JSON.parse(fs.readFileSync("packages/assignment-6/coverage/coverage-summary.json", 'utf8'));
+            const totalCoverage = coverage.total;
+
+            const coverageComment = `
+
+            ## 테스트 성공 ✅
+            ### 커버리지 결과
+
+            - 라인 커버리지: ${totalCoverage.lines.pct}%
+            - 브랜치 커버리지: ${totalCoverage.branches.pct}%
+            - 함수 커버리지: ${totalCoverage.functions.pct}%
+            - 구문 커버리지: ${totalCoverage.statements.pct}%
+            `;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `### tsc&build error ${errorLog}`
-            })
+              body: coverageComment
+            });
 
-  # lint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: latest
+      - name: Comment Test Coverage on Failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.TOKEN_FOR_CI}}
+          script: |
+            const coverageComment = `
+              ## 테스트 실패 ❌
 
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20
-  #         cache: "pnpm"
+              테스트 코드를 확인해주세요.
+            `
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: coverageComment
+            });
 
-  #     - name: Install dependencies
-  #       run: pnpm install
+  lighthouse:
+    runs-on: ubuntu-latest
 
-  #     - name: lint
-  #       id: lint
-  #       run: |
-  #         pnpm -F assignment-6 lint 2>&1 | tee error.log
-  #         exit ${PIPESTATUS[0]}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
 
-  #     - name: Comment PR
-  #       if: failure()
-  #       uses: actions/github-script@v6.4.0
-  #       with:
-  #         github-token: ${{secrets.TOKEN_FOR_CI}}
-  #         script: |
-  #           const fs = require('fs')
-  #           const errorLog = fs.readFileSync('error.log', 'utf8')
+      - name: Install Lighthouse CI
+        run: |
+          npm i -E -g @lhci/cli
+          pnpm install
+      - name: Build Local Server
+        run: |
+          pnpm -F assignment-6 build
+          pnpm -F assignment-6 lighthouse
+      - name: Report Lighthouse
+        if: success()
+        uses: actions/github-script@v6
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        with:
+          github-token: ${{ secrets.TOKEN_FOR_CI }}
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync("packages/assignment-6/lhci_reports/manifest.json", 'utf-8'))
+            console.log(results)
 
-  #           github.rest.issues.createComment({
-  #             issue_number: context.issue.number,
-  #             owner: context.repo.owner,
-  #             repo: context.repo.repo,
-  #             body: `### lint error ${errorLog}`
-  #           })
+            let comments = "";
 
-  # test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: latest
+            results.forEach((result) => {
+              const { summary, jsonPath } = result;
+              const details = JSON.parse(fs.readFileSync(jsonPath))
+              const { audits } = details;
 
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20
-  #         cache: "pnpm"
+              const formatResult = (res) => Math.round(res * 100);
 
-  #     - name: Install dependencies
-  #       run: pnpm install
+              Object.keys(summary).forEach(
+                (key) => (summary[key] = formatResult(summary[key]))
+              );
 
-  #     - name: run test
-  #       run: |
-  #         pnpm -F assignment-6 test:coverage
 
-  #     - name: Vitest Coverage Report
-  #       uses: davelosert/vitest-coverage-report-action@v2.5.0
-  #       with:
-  #         github-token: ${{secrets.TOKEN_FOR_CI}}
-  #         vite-config-path: /home/runner/work/front_2nd/front_2nd/packages/assignment-6/vite.config.ts
-  #         json-summary-path: /home/runner/work/front_2nd/front_2nd/packages/assignment-6/coverage/coverage-summary.json
-  #         json-final-path: /home/runner/work/front_2nd/front_2nd/packages/assignment-6/coverage/coverage-final.json
+              const score = (res) => (res >= 90 ? "🟢" : res >= 50 ? "🟠" : "🔴");
 
-  # lighthouse:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: latest
+              const comment = [
+                `⚡️ Lighthouse report!`,
+                `| Category | Score |`,
+                `| --- | --- |`,
+                `| ${score(summary.performance)} Performance | ${summary.performance} |`,
+                `| ${score(summary.accessibility)} Accessibility | ${
+                  summary.accessibility
+                } |`,
+                `| ${score(summary['best-practices'])} Best practices | ${
+                  summary['best-practices']
+                } |`,
+                `| ${score(summary.seo)} SEO | ${summary.seo} |`,
+                ''
+              ].join('\n');
 
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20
-  #         cache: "pnpm"
+              const detail = [
+                `📊 Lighthouse Detail`,
+                `| Category | Score |`,
+                `| --- | --- |`,
+                `| ${score(
+                  audits['first-contentful-paint'].score * 100
+                )} First Contentful Paint | ${
+                  audits['first-contentful-paint'].displayValue
+                } |`,
+                `| ${score(
+                  audits['largest-contentful-paint'].score * 100
+                )} Largest Contentful Paint | ${
+                  audits['largest-contentful-paint'].displayValue
+                } |`,
+                `| ${score(
+                  audits['total-blocking-time'].score * 100
+                )} Total Blocking Time | ${audits['total-blocking-time'].displayValue} |`,
+                `| ${score(
+                  audits['cumulative-layout-shift'].score * 100
+                )} Cumulative Layout Shift | ${
+                  audits['cumulative-layout-shift'].displayValue
+                } |`,
+                `| ${score(audits['speed-index'].score * 100)} Speed Index | ${
+                  audits['speed-index'].displayValue
+                } |`,
+              ].join('\n');
 
-  #     - name: Install dependencies
-  #       run: pnpm install
+              comments += comment + "\n" + detail + "\n";
+            });
 
-  #     - name: Run Lighthouse CI
-  #       run: |
-  #         pnpm i -g @lhci/cli
-  #         pnpm -F assignment-6 lhci || echo "Fail to Run Lighthouse CI!"
-  #       env:
-  #         LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-
-  #     - name: Format lighthouse score
-  #       id: format_lighthouse
-  #       uses: actions/github-script@v6.4.0
-  #       with:
-  #         github-token: ${{secrets.TOKEN_FOR_CI}}
-  #         script: |
-  #           const fs = require('fs');
-  #           const path = require('path');
-  #           const resultsPath = path.join(process.env.GITHUB_WORKSPACE, 'packages', 'assignment-6', 'lhci_reports', 'manifest.json');
-
-  #           if (!fs.existsSync(resultsPath)) {
-  #             console.log(`File not found: ${resultsPath}`);
-  #             return;
-  #           }
-
-  #           const results = JSON.parse(fs.readFileSync(resultsPath));
-  #           const totalReports = results.length;
-
-  #           // best-practices은 문자열로 저장 ( Lighthouse 지표 )
-  #           const averageScores = {
-  #             performance: 0,
-  #             accessibility: 0,
-  #             'best-practices': 0,
-  #             seo: 0,
-  #             pwa: 0
-  #           };
-
-  #           // Lighthouse 상세 지표
-  #           const auditSummaries = {
-  #             'first-contentful-paint': 0,
-  #             'largest-contentful-paint': 0,
-  #             'interactive': 0,
-  #             'total-blocking-time': 0,
-  #             'cumulative-layout-shift': 0
-  #           };
-
-  #           // 점수 평균
-  #           results.forEach(result => {
-  #             const { summary } = result;
-  #             for (const key in averageScores) {
-  #               averageScores[key] += summary[key];
-  #             }
-
-  #             const details = JSON.parse(fs.readFileSync(result.jsonPath));
-  #             ['first-contentful-paint', 'largest-contentful-paint', 'interactive', 'total-blocking-time', 'cumulative-layout-shift'].forEach(auditName => {
-  #               if (details.audits[auditName]) {
-  #                 const auditDetails = details.audits[auditName];
-  #                 auditSummaries[auditName] += parseFloat(auditDetails.displayValue) || 0;
-  #               }
-  #             });
-  #           });
-
-  #            const formatScore = res => (res >= 90 ? "🟢" : res >= 70 ? "🟠" : "🔴");
-
-  #           // 상세 지표의 표준 점수에 따른 색상 표시
-  #           const detailscore = (value, metric) => {
-  #             switch (metric) {
-  #             case 'first-contentful-paint':
-  #                 return value <= 1.8 ? "🟢" : value <= 3 ? "🟠" : "🔴";
-  #               case 'largest-contentful-paint':
-  #                 return value <= 2.5 ? "🟢" : value <= 4 ? "🟠" : "🔴";
-  #               case 'interactive':
-  #                 return value <= 3.8 ? "🟢" : value <= 7.3 ? "🟠" : "🔴";
-  #               case 'total-blocking-time':
-  #                 return value <= 300 ? "🟢" : value <= 600 ? "🟠" : "🔴";
-  #               case 'cumulative-layout-shift':
-  #                 return value <= 0.1 ? "🟢" : value <= 0.25 ? "🟠" : "🔴";
-  #               default:
-  #               return "🔴"; // Default to red if metric is unknown
-  #               }
-  #           };
-
-  #           let comments = "⚡️ Lighthouse Average Scores Across Reports:\n| Category | Score |\n| --- | --- |\n";
-  #           Object.keys(averageScores).forEach(key => {
-  #             const avgScore = Math.round((averageScores[key] / totalReports) * 100);
-  #             comments += `| ${formatScore(avgScore)}  ${key.replace(/-/g, ' ')} | ${avgScore} |\n`;
-  #           });
-
-  #           comments += "\n⚡️ Average Details Across All Reports:\n| Category | Score |\n| --- | --- |\n";
-  #           Object.keys(auditSummaries).forEach(auditName => {
-  #             const average = auditSummaries[auditName] / totalReports;
-  #             const formattedName = auditName.replace(/-/g, ' ');
-  #             const colorCode = detailscore(average, auditName);
-  #             const unit = (auditName === 'total-blocking-time' ? 'ms' : auditName === 'cumulative-layout-shift' ? '' : 's')
-  #             comments += `| ${colorCode}  ${formattedName} | ${average.toFixed(1)}${unit} |\n`;
-  #                       });
-
-  #           // PR 전송
-  #           if (comments && context.issue.number) {
-  #             const issue_number = context.issue.number;
-  #             const repo = context.repo.repo;
-  #             const owner = context.repo.owner;
-  #             await github.rest.issues.createComment({
-  #               owner,
-  #               repo,
-  #               issue_number,
-  #               body: comments
-  #             });
-  #           } else {
-  #             console.log("No PR COMMENT!");
-  #           }
-
-  # assign_reviewer:
-  #   runs-on: ubuntu-latest
-  #   if: github.event.action == 'opened'
-  #   steps:
-  #     - name: Random reviewer
-  #       uses: actions/github-script@v6.4.0
-  #       with:
-  #         github-token: ${{secrets.TOKEN_FOR_CI}}
-  #         script: |
-  #           const reviewers = ["jiwonkim97", "jexnjeux", "aauraoys"]
-  #           const randomReviewer = reviewers[Math.floor(Math.random() * reviewers.length)]
-
-  #           github.rest.issues.createComment({
-  #             issue_number: context.issue.number,
-  #             owner: context.repo.owner,
-  #             repo: context.repo.repo,
-  #             body: `@${randomReviewer}님, 리뷰 부탁드립니다!!`
-  #           })
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comments
+            });
