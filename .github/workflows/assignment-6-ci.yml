@@ -2,10 +2,13 @@ name: CI Assignment 6
 
 on:
   pull_request:
-    types: [opened, synchronize]
-
+    types:
+      - opened
+      - reopened
+      - synchronize
     paths:
       - "packages/assignment-6/**"
+      - ".github/workflows/assignment-6-ci.yml"
 
 jobs:
   build:
