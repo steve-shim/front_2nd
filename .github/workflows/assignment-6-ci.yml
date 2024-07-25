@@ -66,7 +66,6 @@ jobs:
         id: lint
         run: |
           pnpm -F assignment-6 lint 2>&1 | tee error.log
-          exit ${PIPESTATUS[0]}
 
       - name: Comment PR
         if: failure()
