@@ -1,0 +1,6 @@
+[0m[0m
+[0m[4mD:\advance\dreamcode\OPENSOURCE\CICD_answer\front_2nd\packages\assignment-6\src\main.tsx[24m[0m
+[0m  [2m4:10[22m  [31merror[39m  'forLintError' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[31m[1m✖ 1 problem (1 error, 0 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
