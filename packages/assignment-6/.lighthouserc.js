@@ -1,13 +1,9 @@
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: "npm run start",
-      startServerReadyPattern: "ready on",
-      url: ["http://localhost:3000"],
+      startServerCommand: "pnpm run start",
+      url: ["http://localhost:5173"],
       numberOfRuns: 3,
-      settings: {
-        preset: "desktop",
-      },
     },
     upload: {
       target: "filesystem",
