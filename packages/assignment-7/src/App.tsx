@@ -41,6 +41,7 @@ import {
   EditIcon,
 } from "@chakra-ui/icons";
 import { formatDate } from "./utils/dateUtils";
+import { useSearch } from "./hooks/useSearch";
 
 type RepeatType = "none" | "daily" | "weekly" | "monthly" | "yearly";
 
@@ -130,7 +131,13 @@ function App() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const [searchTerm, setSearchTerm] = useState("");
+  //const [searchTerm, setSearchTerm] = useState("");
+  const { searchTerm, filteredEvents, setSearchTerm } = useSearch(
+    events,
+    currentDate,
+    view
+  );
+
   const [holidays, setHolidays] = useState<{ [key: string]: string }>({});
 
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -416,33 +423,33 @@ function App() {
     });
   };
 
-  const searchEvents = (term: string) => {
-    if (!term.trim()) return events;
+  // const searchEvents = (term: string) => {
+  //   if (!term.trim()) return events;
 
-    return events.filter(
-      (event) =>
-        event.title.toLowerCase().includes(term.toLowerCase()) ||
-        event.description.toLowerCase().includes(term.toLowerCase()) ||
-        event.location.toLowerCase().includes(term.toLowerCase())
-    );
-  };
+  //   return events.filter(
+  //     (event) =>
+  //       event.title.toLowerCase().includes(term.toLowerCase()) ||
+  //       event.description.toLowerCase().includes(term.toLowerCase()) ||
+  //       event.location.toLowerCase().includes(term.toLowerCase())
+  //   );
+  // };
 
-  const filteredEvents = (() => {
-    const filtered = searchEvents(searchTerm);
-    return filtered.filter((event) => {
-      const eventDate = new Date(event.date);
-      if (view === "week") {
-        const weekDates = getWeekDates(currentDate);
-        return eventDate >= weekDates[0] && eventDate <= weekDates[6];
-      } else if (view === "month") {
-        return (
-          eventDate.getMonth() === currentDate.getMonth() &&
-          eventDate.getFullYear() === currentDate.getFullYear()
-        );
-      }
-      return true;
-    });
-  })();
+  // const filteredEvents = (() => {
+  //   const filtered = searchEvents(searchTerm);
+  //   return filtered.filter((event) => {
+  //     const eventDate = new Date(event.date);
+  //     if (view === "week") {
+  //       const weekDates = getWeekDates(currentDate);
+  //       return eventDate >= weekDates[0] && eventDate <= weekDates[6];
+  //     } else if (view === "month") {
+  //       return (
+  //         eventDate.getMonth() === currentDate.getMonth() &&
+  //         eventDate.getFullYear() === currentDate.getFullYear()
+  //       );
+  //     }
+  //     return true;
+  //   });
+  // })();
 
   const formatWeek = (date: Date): string => {
     const year = date.getFullYear();
