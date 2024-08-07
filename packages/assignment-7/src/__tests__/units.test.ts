@@ -1,10 +1,15 @@
 import { describe, expect, test } from "vitest";
-import { fillZero, formatDate, getWeekDates } from "../utils/dateUtils";
+import { fillZero, formatDate, getWeekDates, formatWeek, formatMonth, isDateInRange, getDaysInMonth } from "../utils/dateUtils";
 import { getFilteredEvents } from "../utils/eventUtils";
 
 describe("단위 테스트: 날짜 및 시간 관리", () => {
-  describe("getDaysInMonth 함수", () => {
-    test.fails("주어진 월의 일 수를 정확히 반환한다");
+  describe("getDaysInMonth >", () => {
+    test("주어진 월의 일 수를 정확히 반환한다", () => {
+      expect(getDaysInMonth(2024, 1)).toBe(31); // 1월
+      expect(getDaysInMonth(2024, 2)).toBe(29); // 윤년의 2월
+      expect(getDaysInMonth(2023, 2)).toBe(28); // 평년의 2월
+      expect(getDaysInMonth(2024, 4)).toBe(30); // 4월
+    });
   });
 
   describe("getWeekDates >", () => {
@@ -104,15 +109,29 @@ describe("단위 테스트: 날짜 및 시간 관리", () => {
     });
   });
 
-  describe("formatWeek 함수", () => {
-    test.fails("주어진 날짜의 주 정보를 올바른 형식으로 반환한다");
+  describe("formatWeek >", () => {
+    test("주어진 날짜의 주 정보를 올바른 형식으로 반환한다", () => {
+      const date = new Date("2024-07-10");
+      expect(formatWeek(date)).toBe("2024년 7월 2주");
+    });
   });
 
-  describe("formatMonth 함수", () => {
-    test.fails("주어진 날짜의 월 정보를 올바른 형식으로 반환한다");
+  describe("formatMonth >", () => {
+    test("주어진 날짜의 월 정보를 올바른 형식으로 반환한다", () => {
+      const date = new Date("2024-07-10");
+      expect(formatMonth(date)).toBe("2024년 7월");
+    });
   });
 
-  describe("isDateInRange 함수", () => {
-    test.fails("주어진 날짜가 특정 범위 내에 있는지 정확히 판단한다");
+  describe("isDateInRange >", () => {
+    test("주어진 날짜가 특정 범위 내에 있는지 정확히 판단한다", () => {
+      const date = new Date("2024-07-10");
+      const rangeStart = new Date("2024-07-01");
+      const rangeEnd = new Date("2024-07-31");
+      expect(isDateInRange(date, rangeStart, rangeEnd)).toBe(true);
+
+      const outOfRangeDate = new Date("2024-08-01");
+      expect(isDateInRange(outOfRangeDate, rangeStart, rangeEnd)).toBe(false);
+    });
   });
 });
