@@ -82,6 +82,6 @@ export function isDateInRange(date: Date, rangeStart: Date, rangeEnd: Date): boo
   return date >= rangeStart && date <= rangeEnd;
 }
 
-export function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
 }
