@@ -33,7 +33,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { BellIcon, ChevronLeftIcon, ChevronRightIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { formatDate, formatMonth, formatWeek, getEventsForDay, getWeekDates, getWeeksAtMonth } from "./utils/dateUtils";
+import { formatDate, formatMonth, formatWeek, getEventsForDay, getWeekDates, getWeeksAtMonth, filteredRepeatEvents } from "./utils/dateUtils";
 import { Event, RepeatType } from "./types";
 import { getTimeErrorMessage } from "./utils/timeValidation";
 import { findOverlappingEvents } from "./utils/eventOverlap";
@@ -150,6 +150,7 @@ function App() {
 
   const renderWeekView = () => {
     const weekDates = getWeekDates(currentDate);
+    const repeatEvents = filteredRepeatEvents(events, searchTerm, view, currentDate);
     return (
       <VStack data-testid="week-view" align="stretch" w="full" spacing={4}>
         <Heading size="md">{formatWeek(currentDate)}</Heading>
@@ -168,7 +169,7 @@ function App() {
               {weekDates.map((date) => (
                 <Td key={date.toISOString()} height="100px" verticalAlign="top" width="14.28%">
                   <Text fontWeight="bold">{date.getDate()}</Text>
-                  {filteredEvents
+                  {[...filteredEvents, ...repeatEvents]
                     .filter((event) => new Date(event.date).toDateString() === date.toDateString())
                     .map((event) => {
                       const isNotified = notifiedEvents.includes(event.id);
@@ -202,7 +203,7 @@ function App() {
 
   const renderMonthView = () => {
     const weeks = getWeeksAtMonth(currentDate);
-
+    const repeatEvents = filteredRepeatEvents(events, searchTerm, view, currentDate);
     return (
       <VStack data-testid="month-view" align="stretch" w="full" spacing={4}>
         <Heading size="md">{formatMonth(currentDate)}</Heading>
@@ -233,27 +234,30 @@ function App() {
                               {holiday}
                             </Text>
                           )}
-                          {getEventsForDay(filteredEvents, day).map((event) => {
-                            const isNotified = notifiedEvents.includes(event.id);
-                            return (
-                              <Box
-                                key={event.id}
-                                p={1}
-                                my={1}
-                                bg={isNotified ? "red.100" : "gray.100"}
-                                borderRadius="md"
-                                fontWeight={isNotified ? "bold" : "normal"}
-                                color={isNotified ? "red.500" : "inherit"}
-                              >
-                                <HStack spacing={1}>
-                                  {isNotified && <BellIcon />}
-                                  <Text fontSize="sm" noOfLines={1}>
-                                    {event.title}
-                                  </Text>
-                                </HStack>
-                              </Box>
-                            );
-                          })}
+                          {filteredEvents &&
+                            [...filteredEvents, ...repeatEvents]
+                              .filter((event) => new Date(event.date).getDate() === day)
+                              .map((event) => {
+                                const isNotified = notifiedEvents.includes(event.id);
+                                return (
+                                  <Box
+                                    key={event.id}
+                                    p={1}
+                                    my={1}
+                                    bg={isNotified ? "red.100" : "gray.100"}
+                                    borderRadius="md"
+                                    fontWeight={isNotified ? "bold" : "normal"}
+                                    color={isNotified ? "red.500" : "inherit"}
+                                  >
+                                    <HStack spacing={1}>
+                                      {isNotified && <BellIcon />}
+                                      <Text fontSize="sm" noOfLines={1}>
+                                        {event.title}
+                                      </Text>
+                                    </HStack>
+                                  </Box>
+                                );
+                              })}
                         </>
                       )}
                     </Td>

@@ -220,27 +220,36 @@ describe("일정 관리 애플리케이션 통합 테스트", () => {
     });
   });
 
-  //   describe("달력", () => {
-  //     test("반복 유형 선택 테스트 (매주)", async () => {
-  //       const { user } = setup(<App />);
+  describe("달력", () => {
+    test("반복 유형 선택 테스트 (매월)", async () => {
+      const { user } = setup(<App />);
 
-  //       // 일정 정보 입력
-  //       await user.type(screen.getByLabelText("제목"), "새 회의2");
-  //       await user.type(screen.getByLabelText("날짜"), "2024-07-21");
-  //       await user.type(screen.getByLabelText("시작 시간"), "14:00");
-  //       await user.type(screen.getByLabelText("종료 시간"), "15:00");
-  //       await user.type(screen.getByLabelText("설명"), "프로젝트 진행 상황 논의2");
-  //       await user.type(screen.getByLabelText("위치"), "회의실 B");
-  //       await user.selectOptions(screen.getByLabelText("카테고리"), "업무");
-  //       await user.selectOptions(screen.getByLabelText("반복 유형"), "매주");
-  //       await user.type(screen.getByLabelText("반복 간격"), "3");
+      // 일정 정보 입력
+      await user.type(screen.getByLabelText("제목"), "반복");
+      await user.type(screen.getByLabelText("날짜"), "2024-07-21");
+      await user.type(screen.getByLabelText("시작 시간"), "14:00");
+      await user.type(screen.getByLabelText("종료 시간"), "15:00");
+      await user.type(screen.getByLabelText("설명"), "프로젝트 진행 상황 논의2");
+      await user.type(screen.getByLabelText("위치"), "회의실 B");
+      await user.selectOptions(screen.getByLabelText("카테고리"), "업무");
+      await user.selectOptions(screen.getByLabelText("반복 유형"), "매월");
+      await user.type(screen.getByLabelText("반복 간격"), "1");
 
-  //       // 저장 버튼 클릭
-  //       await user.click(screen.getByTestId("event-submit-button"));
+      // 저장 버튼 클릭
+      await user.click(screen.getByTestId("event-submit-button"));
 
-  //       // 새로 추가된 일정이 목록에 표시되는지 확인
-  //       const monthView = screen.getByTestId("month-view");
-  //       expect(monthView).toHaveTextContent("새 회의2");
-  //     });
-  //   });
+      let monthView = screen.getByTestId("month-view");
+      expect(monthView).toHaveTextContent("반복");
+
+      // 8월 뷰로 변경
+      vi.setSystemTime(new Date(2024, 7, 1));
+      monthView = screen.getByTestId("month-view");
+      expect(monthView).toHaveTextContent("반복");
+
+      // 9월 뷰로 변경
+      vi.setSystemTime(new Date(2024, 8, 1));
+      monthView = screen.getByTestId("month-view");
+      expect(monthView).toHaveTextContent("반복");
+    });
+  });
 });

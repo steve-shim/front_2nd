@@ -1,8 +1,8 @@
-import { Event } from '../types';
-import { getWeekDates, isDateInRange } from './dateUtils';
+import { Event } from "../types";
+import { getWeekDates, isDateInRange } from "./dateUtils";
 
 function filterEventsByDateRange(events: Event[], start: Date, end: Date): Event[] {
-  return events.filter(event => {
+  return events.filter((event) => {
     const eventDate = new Date(event.date);
     return isDateInRange(eventDate, start, end);
   });
@@ -12,11 +12,9 @@ function containsTerm(target: string, term: string) {
   return target.toLowerCase().includes(term.toLowerCase());
 }
 
-function searchEvents(events: Event[], term: string) {
-  return events.filter(({ title, description, location }) =>
-    containsTerm(title, term) ||
-    containsTerm(description, term) ||
-    containsTerm(location, term)
+export function searchEvents(events: Event[], term: string) {
+  return events.filter(
+    ({ title, description, location }) => containsTerm(title, term) || containsTerm(description, term) || containsTerm(location, term)
   );
 }
 
@@ -31,14 +29,14 @@ function filterEventsByDateRangeAtMonth(events: Event[], currentDate: Date) {
   return filterEventsByDateRange(events, monthStart, monthEnd);
 }
 
-export function getFilteredEvents(events: Event[], searchTerm: string, currentDate: Date, view: 'week' | 'month'): Event[] {
+export function getFilteredEvents(events: Event[], searchTerm: string, currentDate: Date, view: "week" | "month"): Event[] {
   const searchedEvents = searchEvents(events, searchTerm);
 
-  if (view === 'week') {
+  if (view === "week") {
     return filterEventsByDateRangeAtWeek(searchedEvents, currentDate);
   }
 
-  if (view === 'month') {
+  if (view === "month") {
     return filterEventsByDateRangeAtMonth(searchedEvents, currentDate);
   }
 
