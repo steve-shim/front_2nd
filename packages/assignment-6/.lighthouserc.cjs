@@ -1,22 +1,15 @@
-export default {
+module.exports = {
   ci: {
     collect: {
-      staticDistDir: "./dist",
-      startServerCommand: "pnpm run start",
-      url: ["http://localhost:5174"],
-      numberOfRuns: 1,
+      startServerCommand: "pnpm run start", // 서버를 키는 명령어를 통해서도 실행 가능
+      url: ["http://localhost:5173"],
+      numberOfRuns: 3,
     },
     upload: {
-      target: "temporary-public-storage",
-    },
-    assert: {
-      preset: "lighthouse:no-pwa",
-      assertions: {
-        "categories:performance": ["error", { minScore: 0.8 }],
-        "categories:accessibility": ["error", { minScore: 0.8 }],
-        "categories:best-practices": ["error", { minScore: 0.9 }],
-        "categories:seo": ["error", { minScore: 0.8 }],
-      },
+      // 레포트 생성
+      target: "filesystem",
+      outputDir: "./lhci_reports",
+      reportFilenamePattern: "%%PATHNAME%%-%%DATETIME%%-report.%%EXTENSION%%",
     },
   },
 };

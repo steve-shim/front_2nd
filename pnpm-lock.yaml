@@ -303,6 +303,9 @@ importers:
 
   packages/assignment-6:
     dependencies:
+      '@lhci/cli':
+        specifier: ^0.14.0
+        version: 0.14.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -310,9 +313,6 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
-      '@lhci/cli':
-        specifier: ^0.14.0
-        version: 0.14.0
       '@testing-library/jest-dom':
         specifier: ^6.4.5
         version: 6.4.5(vitest@2.0.2(@types/node@20.14.12)(@vitest/ui@1.6.0)(jsdom@24.0.0))
@@ -338,7 +338,7 @@ importers:
         specifier: ^3.5.0
         version: 3.7.0(vite@5.3.3(@types/node@20.14.12))
       '@vitest/coverage-v8':
-        specifier: ^2.0.3
+        specifier: ^2.0.4
         version: 2.0.4(vitest@2.0.2(@types/node@20.14.12)(@vitest/ui@1.6.0)(jsdom@24.0.0))
       '@vitest/ui':
         specifier: ^1.6.0
