@@ -3,7 +3,7 @@ export default {
     collect: {
       staticDistDir: "./dist",
       startServerCommand: "pnpm run preview",
-      url: ["http://localhost:4173"],
+      url: ["http://localhost:5174"],
       numberOfRuns: 1,
     },
     upload: {
