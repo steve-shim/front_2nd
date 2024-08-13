@@ -2,7 +2,7 @@ export default {
   ci: {
     collect: {
       staticDistDir: "./dist",
-      startServerCommand: "pnpm run preview",
+      startServerCommand: "pnpm run start",
       url: ["http://localhost:5174"],
       numberOfRuns: 1,
     },
