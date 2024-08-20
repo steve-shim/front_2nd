@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -34,6 +34,7 @@ import { Lecture } from './types.ts';
 import { parseSchedule } from './utils.ts';
 import axios from 'axios';
 import { DAY_LABELS } from './constants.ts';
+import OptimizedTable from './OptimizedTable.tsx';
 
 interface Props {
   searchInfo: {
@@ -82,47 +83,31 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-const createCachedFetch = fetchFunction => {
-  let cache = null;
-  let fetchPromise = null;
-
-  return async () => {
-    if (cache) {
-      console.log('Returning cached data', performance.now());
-      return cache;
+const fetchLectures = (() => {
+  const cache = new WeakMap();
+  return fn => {
+    const cached = cache.get(fn);
+    if (cached) {
+      return cached;
     }
-
-    if (!fetchPromise) {
-      console.log('Starting new fetch', performance.now());
-      fetchPromise = fetchFunction().then(response => {
-        cache = response.data;
-        fetchPromise = null;
-        return cache;
-      });
-    } else {
-      console.log('Using existing fetch promise', performance.now());
-    }
-
-    return fetchPromise;
+    const result = fn();
+    cache.set(fn, result);
+    return result;
   };
-};
+})();
 
-const cachedFetchMajors = createCachedFetch(() => axios.get<Lecture[]>('/schedules-majors.json'));
-const cachedFetchLiberalArts = createCachedFetch(() => axios.get<Lecture[]>('/schedules-liberal-arts.json'));
-
-const fetchAllLectures = async () => {
-  const results = await Promise.all([
-    cachedFetchMajors(),
-    cachedFetchLiberalArts(),
-    cachedFetchMajors(),
-    cachedFetchLiberalArts(),
-    cachedFetchMajors(),
-    cachedFetchLiberalArts(),
+const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json');
+const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json');
+// TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
+const fetchAllLectures = async () =>
+  await Promise.all([
+    (console.log('API Call 1', performance.now()), fetchLectures(() => fetchMajors())),
+    (console.log('API Call 2', performance.now()), fetchLectures(() => fetchLiberalArts())),
+    (console.log('API Call 3', performance.now()), fetchLectures(() => fetchMajors())),
+    (console.log('API Call 4', performance.now()), fetchLectures(() => fetchLiberalArts())),
+    (console.log('API Call 5', performance.now()), fetchLectures(() => fetchMajors())),
+    (console.log('API Call 6', performance.now()), fetchLectures(() => fetchLiberalArts())),
   ]);
-
-  console.log('All fetches completed', performance.now());
-  return results;
-};
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
@@ -179,23 +164,26 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     loaderWrapperRef.current?.scrollTo(0, 0);
   };
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
 
-    const { tableId } = searchInfo;
+      const { tableId } = searchInfo;
 
-    const schedules = parseSchedule(lecture.schedule).map(schedule => ({
-      ...schedule,
-      lecture,
-    }));
+      const schedules = parseSchedule(lecture.schedule).map(schedule => ({
+        ...schedule,
+        lecture,
+      }));
 
-    setSchedulesMap(prev => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
+      setSchedulesMap(prev => ({
+        ...prev,
+        [tableId]: [...prev[tableId], ...schedules],
+      }));
 
-    onClose();
-  };
+      onClose();
+    },
+    [onClose, searchInfo, setSchedulesMap]
+  );
 
   useEffect(() => {
     const start = performance.now();
@@ -204,8 +192,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       const end = performance.now();
       console.log('모든 API 호출 완료 ', end);
       console.log('API 호출에 걸린 시간(ms): ', end - start);
-      //setLectures(results.flatMap((result) => result.data));
-      setLectures(results.flatMap(result => result));
+      setLectures(results.flatMap(result => result.data));
     });
   }, []);
 
@@ -407,7 +394,8 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               </Table>
 
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
-                <Table size="sm" variant="striped">
+                <OptimizedTable visibleLectures={visibleLectures} addSchedule={addSchedule} />
+                {/* <Table size="sm" variant="striped">
                   <Tbody>
                     {visibleLectures.map((lecture, index) => (
                       <Tr key={`${lecture.id}-${index}`}>
@@ -425,7 +413,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                       </Tr>
                     ))}
                   </Tbody>
-                </Table>
+                </Table> */}
                 <Box ref={loaderRef} h="20px" />
               </Box>
             </Box>
