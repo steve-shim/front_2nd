@@ -1,15 +1,14 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { act, fireEvent, render } from "@testing-library/react";
 import { useState } from "react";
 import { useMyRef } from "../useMyRef.ts";
 
 beforeEach(() => {
   vi.clearAllMocks();
-})
+});
 
-describe('useRef > ', () => {
-
-  test('useRef와 똑같이 동작하는 useMyRef를 만들어서 사용할 수 있다.', () => {
+describe("useRef > ", () => {
+  test("useRef와 똑같이 동작하는 useMyRef를 만들어서 사용할 수 있다.", () => {
     const refs = new Set();
 
     const UseMyRefTest = ({ label }: { label: string }) => {
@@ -22,9 +21,8 @@ describe('useRef > ', () => {
         <div ref={ref}>
           <button onClick={() => rerender({})}>{label}</button>
         </div>
-      )
-    }
-
+      );
+    };
 
     const { getByText } = render(
       <>
@@ -34,10 +32,10 @@ describe('useRef > ', () => {
     );
 
     act(() => {
-      fireEvent.click(getByText('rerender1'));
-      fireEvent.click(getByText('rerender2'));
-    })
-
+      fireEvent.click(getByText("rerender1"));
+      fireEvent.click(getByText("rerender2"));
+    });
+    //만약 useMyRef가 제대로 구현되지 않았다면 (예: 매 렌더링마다 새 ref를 생성한다면), refs.size는 2보다 클 것
     expect(refs.size).toBe(2);
-  })
-})
+  });
+});
